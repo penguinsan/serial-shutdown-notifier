@@ -1,0 +1,154 @@
+mod config;
+mod serial;
+mod service;
+
+use std::ffi::OsString;
+use windows_service::service_dispatcher;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // ログ初期化
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
+        .target(env_logger::Target::Stdout)
+        .init();
+
+    let args: Vec<OsString> = std::env::args_os().collect();
+
+    // コマンドライン引数の処理
+    if args.len() > 1 {
+        let arg = args[1].to_string_lossy().to_lowercase();
+        match arg.as_str() {
+            "install" => {
+                install_service()?;
+                println!("Service installed successfully.");
+                println!("Start the service with: sc start {}", service::SERVICE_NAME);
+                return Ok(());
+            }
+            "uninstall" => {
+                uninstall_service()?;
+                println!("Service uninstalled successfully.");
+                return Ok(());
+            }
+            "test" => {
+                test_serial_connection()?;
+                return Ok(());
+            }
+            _ => {
+                print_usage();
+                return Ok(());
+            }
+        }
+    }
+
+    // サービスとして起動
+    log::info!("Starting service dispatcher");
+    service_dispatcher::start(service::SERVICE_NAME, ffi_service_main)?;
+
+    Ok(())
+}
+
+fn ffi_service_main(_arguments: Vec<OsString>) {
+    if let Err(e) = service::run_service() {
+        log::error!("Service error: {}", e);
+    }
+}
+
+fn install_service() -> Result<(), Box<dyn std::error::Error>> {
+    use std::process::Command;
+
+    let exe_path = std::env::current_exe()?;
+    let exe_path_str = exe_path.to_string_lossy();
+
+    let output = Command::new("sc")
+        .args([
+            "create",
+            service::SERVICE_NAME,
+            &format!("binPath= \"{}\"", exe_path_str),
+            &format!("DisplayName= \"{}\"", service::SERVICE_DISPLAY_NAME),
+            "start= auto",
+        ])
+        .output()?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "Failed to install service: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into());
+    }
+
+    // プリシャットダウン設定を追加（シャットダウン前に確実に実行されるようにする）
+    let output = Command::new("sc")
+        .args([
+            "config",
+            service::SERVICE_NAME,
+            "start= auto",
+        ])
+        .output()?;
+
+    if !output.status.success() {
+        log::warn!("Failed to configure preshutdown: {}", String::from_utf8_lossy(&output.stderr));
+    }
+
+    Ok(())
+}
+
+fn uninstall_service() -> Result<(), Box<dyn std::error::Error>> {
+    use std::process::Command;
+
+    // サービスを停止
+    let _ = Command::new("sc")
+        .args(["stop", service::SERVICE_NAME])
+        .output();
+
+    // サービスを削除
+    let output = Command::new("sc")
+        .args(["delete", service::SERVICE_NAME])
+        .output()?;
+
+    if !output.status.success() {
+        return Err(format!(
+            "Failed to uninstall service: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into());
+    }
+
+    Ok(())
+}
+
+fn test_serial_connection() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Testing serial connection...");
+
+    let exe_path = std::env::current_exe()?;
+    let exe_dir = exe_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let config_path = exe_dir.join("config.toml");
+
+    let config = config::Config::load_or_default(&config_path);
+
+    println!("Configuration:");
+    println!("  Port: {}", config.serial.port);
+    println!("  Baud Rate: {}", config.serial.baud_rate);
+    println!("  Data Bits: {}", config.serial.data_bits);
+    println!("  Parity: {}", config.serial.parity);
+    println!("  Stop Bits: {}", config.serial.stop_bits);
+    println!("  Message: {:?}", config.message.shutdown_text);
+
+    let sender = serial::SerialSender::new(config);
+
+    println!("\nSending test message...");
+    sender.send_shutdown_message()?;
+
+    println!("Test completed successfully!");
+    Ok(())
+}
+
+fn print_usage() {
+    println!("BitZeus Windows Shutdown Service");
+    println!();
+    println!("Usage:");
+    println!("  {} install   - Install the service", std::env::args().next().unwrap());
+    println!("  {} uninstall - Uninstall the service", std::env::args().next().unwrap());
+    println!("  {} test      - Test serial connection", std::env::args().next().unwrap());
+    println!();
+    println!("Service will automatically send a message to the configured serial port on shutdown.");
+}

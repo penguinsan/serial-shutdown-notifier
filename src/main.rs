@@ -46,7 +46,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn ffi_service_main(_arguments: Vec<OsString>) {
+windows_service::define_windows_service!(ffi_service_main, service_main);
+
+fn service_main(_arguments: Vec<OsString>) {
     if let Err(e) = service::run_service() {
         log::error!("Service error: {}", e);
     }
@@ -143,7 +145,7 @@ fn test_serial_connection() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn print_usage() {
-    println!("BitZeus Windows Shutdown Service");
+    println!("Serial Shutdown Notifier");
     println!();
     println!("Usage:");
     println!("  {} install   - Install the service", std::env::args().next().unwrap());
@@ -151,4 +153,33 @@ fn print_usage() {
     println!("  {} test      - Test serial connection", std::env::args().next().unwrap());
     println!();
     println!("Service will automatically send a message to the configured serial port on shutdown.");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_constants() {
+        // サービス名が正しく設定されているか確認
+        assert_eq!(service::SERVICE_NAME, "SerialShutdownNotifier");
+        assert_eq!(service::SERVICE_DISPLAY_NAME, "Serial Shutdown Notifier");
+    }
+
+    #[test]
+    fn test_config_loading() {
+        // デフォルト設定が正しくロードできることを確認
+        let config = config::Config::default();
+        assert_eq!(config.serial.port, "COM1");
+        assert_eq!(config.serial.baud_rate, 9600);
+    }
+
+    #[test]
+    fn test_serial_sender_creation() {
+        // SerialSenderが正しく作成できることを確認
+        let config = config::Config::default();
+        let _sender = serial::SerialSender::new(config);
+        // 基本的な作成テスト（実際のシリアルポートは開かない）
+        // SerialSenderが作成できればOK（パニックしない）
+    }
 }

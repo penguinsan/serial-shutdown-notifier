@@ -1,4 +1,4 @@
-# BitZeus Windows Shutdown Service
+# Serial Shutdown Notifier
 
 Windowsシャットダウン時にシリアルポート経由で文字列を送信するWindowsサービスです。
 
@@ -20,33 +20,33 @@ Windowsシャットダウン時にシリアルポート経由で文字列を送�
 cargo build --release
 ```
 
-ビルド後、実行ファイルは `target\release\bit-zeus-win.exe` に生成されます。
+ビルド後、実行ファイルは `target\release\serial-shutdown-notifier.exe` に生成されます。
 
 ## インストール手順
 
-1. ビルドした実行ファイル `bit-zeus-win.exe` を任意のディレクトリにコピー
+1. ビルドした実行ファイル `serial-shutdown-notifier.exe` を任意のディレクトリにコピー
 2. 同じディレクトリに `config.toml` をコピー（または自動生成される）
 3. 管理者権限でコマンドプロンプトを開く
 4. 以下のコマンドを実行:
 
 ```cmd
-bit-zeus-win.exe install
+serial-shutdown-notifier.exe install
 ```
 
 5. サービスを起動:
 
 ```cmd
-sc start BitZeusWinService
+sc start SerialShutdownNotifier
 ```
 
-またはサービス管理ツール（services.msc）から「BitZeus Windows Shutdown Service」を起動します。
+またはサービス管理ツール（services.msc）から「Serial Shutdown Notifier」を起動します。
 
 ## アンインストール手順
 
 管理者権限でコマンドプロンプトを開き、以下のコマンドを実行:
 
 ```cmd
-bit-zeus-win.exe uninstall
+serial-shutdown-notifier.exe uninstall
 ```
 
 ## 設定ファイル
@@ -78,7 +78,7 @@ shutdown_text = "SHUTDOWN\r"  # 送信する文字列（\r=CR, \n=LF）
 サービスをインストールする前に、シリアルポート接続をテストできます:
 
 ```cmd
-bit-zeus-win.exe test
+serial-shutdown-notifier.exe test
 ```
 
 このコマンドは設定ファイルを読み込み、実際にシリアルポートへメッセージを送信します。
@@ -98,7 +98,7 @@ bit-zeus-win.exe test
 
 ### シャットダウン時にメッセージが送信されない
 
-- サービスが実行中か確認: `sc query BitZeusWinService`
+- サービスが実行中か確認: `sc query SerialShutdownNotifier`
 - ログファイルの確認（現在は標準出力のみ）
 
 ## ログ
@@ -107,8 +107,8 @@ bit-zeus-win.exe test
 
 ## ライセンス
 
-（ライセンスを記載）
+MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照してください。
 
 ## 作者
 
-（作者情報を記載）
+penguinsan

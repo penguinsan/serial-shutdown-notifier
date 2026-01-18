@@ -1,5 +1,5 @@
 use crate::config::Config;
-use serialport::{DataBits, Parity, SerialPort, StopBits};
+use serialport::{DataBits, Parity, StopBits};
 use std::time::Duration;
 
 pub struct SerialSender {
@@ -72,12 +72,145 @@ impl SerialSender {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::Config;
+    use crate::config::{Config, SerialConfig, MessageConfig};
 
     #[test]
     fn test_serial_sender_creation() {
         let config = Config::default();
         let sender = SerialSender::new(config);
         assert_eq!(sender.config.serial.port, "COM1");
+    }
+
+    #[test]
+    fn test_serial_sender_with_custom_config() {
+        let config = Config {
+            serial: SerialConfig {
+                port: "COM5".to_string(),
+                baud_rate: 115200,
+                data_bits: 8,
+                parity: "None".to_string(),
+                stop_bits: 1,
+            },
+            message: MessageConfig {
+                shutdown_text: "CUSTOM\r\n".to_string(),
+            },
+        };
+
+        let sender = SerialSender::new(config);
+        assert_eq!(sender.config.serial.port, "COM5");
+        assert_eq!(sender.config.serial.baud_rate, 115200);
+        assert_eq!(sender.config.message.shutdown_text, "CUSTOM\r\n");
+    }
+
+    #[test]
+    fn test_data_bits_validation() {
+        // 有効なデータビット値をテスト
+        for bits in [5, 6, 7, 8] {
+            let config = Config {
+                serial: SerialConfig {
+                    port: "COM1".to_string(),
+                    baud_rate: 9600,
+                    data_bits: bits,
+                    parity: "None".to_string(),
+                    stop_bits: 1,
+                },
+                message: MessageConfig {
+                    shutdown_text: "TEST".to_string(),
+                },
+            };
+            let sender = SerialSender::new(config);
+            assert_eq!(sender.config.serial.data_bits, bits);
+        }
+    }
+
+    #[test]
+    fn test_parity_values() {
+        // 有効なパリティ値をテスト
+        for parity in ["None", "Odd", "Even"] {
+            let config = Config {
+                serial: SerialConfig {
+                    port: "COM1".to_string(),
+                    baud_rate: 9600,
+                    data_bits: 8,
+                    parity: parity.to_string(),
+                    stop_bits: 1,
+                },
+                message: MessageConfig {
+                    shutdown_text: "TEST".to_string(),
+                },
+            };
+            let sender = SerialSender::new(config);
+            assert_eq!(sender.config.serial.parity.to_lowercase(), parity.to_lowercase());
+        }
+    }
+
+    #[test]
+    fn test_stop_bits_validation() {
+        // 有効なストップビット値をテスト
+        for bits in [1, 2] {
+            let config = Config {
+                serial: SerialConfig {
+                    port: "COM1".to_string(),
+                    baud_rate: 9600,
+                    data_bits: 8,
+                    parity: "None".to_string(),
+                    stop_bits: bits,
+                },
+                message: MessageConfig {
+                    shutdown_text: "TEST".to_string(),
+                },
+            };
+            let sender = SerialSender::new(config);
+            assert_eq!(sender.config.serial.stop_bits, bits);
+        }
+    }
+
+    #[test]
+    fn test_baud_rate_values() {
+        // 一般的なボーレート値をテスト
+        for baud_rate in [9600, 19200, 38400, 57600, 115200] {
+            let config = Config {
+                serial: SerialConfig {
+                    port: "COM1".to_string(),
+                    baud_rate,
+                    data_bits: 8,
+                    parity: "None".to_string(),
+                    stop_bits: 1,
+                },
+                message: MessageConfig {
+                    shutdown_text: "TEST".to_string(),
+                },
+            };
+            let sender = SerialSender::new(config);
+            assert_eq!(sender.config.serial.baud_rate, baud_rate);
+        }
+    }
+
+    #[test]
+    fn test_message_content() {
+        let test_messages = vec![
+            "SHUTDOWN\r",
+            "SHUTDOWN\n",
+            "SHUTDOWN\r\n",
+            "HALT",
+            "",
+        ];
+
+        for msg in test_messages {
+            let config = Config {
+                serial: SerialConfig {
+                    port: "COM1".to_string(),
+                    baud_rate: 9600,
+                    data_bits: 8,
+                    parity: "None".to_string(),
+                    stop_bits: 1,
+                },
+                message: MessageConfig {
+                    shutdown_text: msg.to_string(),
+                },
+            };
+            let sender = SerialSender::new(config);
+            assert_eq!(sender.config.message.shutdown_text, msg);
+        }
     }
 }

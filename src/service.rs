@@ -1,15 +1,13 @@
 use crate::config::Config;
 use crate::serial::SerialSender;
-use std::ffi::OsString;
-use std::sync::mpsc;
 use std::time::Duration;
 use windows_service::service::{
     ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus, ServiceType,
 };
 use windows_service::service_control_handler::{self, ServiceControlHandlerResult};
 
-pub const SERVICE_NAME: &str = "BitZeusWinService";
-pub const SERVICE_DISPLAY_NAME: &str = "BitZeus Windows Shutdown Service";
+pub const SERVICE_NAME: &str = "SerialShutdownNotifier";
+pub const SERVICE_DISPLAY_NAME: &str = "Serial Shutdown Notifier";
 
 pub fn run_service() -> Result<(), windows_service::Error> {
     let event_handler = move |control_event| -> ServiceControlHandlerResult {

@@ -1,0 +1,32 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo
+Cargo.lock
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Config files (if you want to ignore local config)
+# config.toml
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Debug
+*.log

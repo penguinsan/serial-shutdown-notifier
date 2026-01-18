@@ -1,7 +1,11 @@
 [package]
-name = "bit-zeus-win"
+name = "serial-shutdown-notifier"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+authors = ["penguinsan"]
+description = "Windows service that sends a message via serial port on shutdown"
+repository = "https://github.com/penguinsan/serial-shutdown-notifier"
 
 [dependencies]
 windows-service = "0.7"

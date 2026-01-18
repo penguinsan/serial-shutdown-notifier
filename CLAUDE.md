@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**bit-zeus-win** - Windowsシャットダウン時にシリアルポート経由で文字列を送信するWindowsサービス
+**serial-shutdown-notifier** - Windowsシャットダウン時にシリアルポート経由で文字列を送信するWindowsサービス
 
 ### 技術スタック
 - 言語: Rust (Edition 2021)
@@ -27,12 +27,12 @@ cargo run --release -- test
 
 ### サービスのインストール（管理者権限必要）
 ```cmd
-target\release\bit-zeus-win.exe install
+target\release\serial-shutdown-notifier.exe install
 ```
 
 ### サービスのアンインストール（管理者権限必要）
 ```cmd
-target\release\bit-zeus-win.exe uninstall
+target\release\serial-shutdown-notifier.exe uninstall
 ```
 
 ## Architecture

@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+
+  build-and-upload:
+    name: Build and Upload Assets
+    needs: create-release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build release
+        run: cargo build --release --verbose
+
+      - name: Create release package
+        run: |
+          mkdir release-package
+          copy target\release\serial-shutdown-notifier.exe release-package\
+          copy LICENSE release-package\
+          copy README.md release-package\
+          echo [serial] > release-package\config.toml
+          echo port = "COM1" >> release-package\config.toml
+          echo baud_rate = 9600 >> release-package\config.toml
+          echo data_bits = 8 >> release-package\config.toml
+          echo parity = "None" >> release-package\config.toml
+          echo stop_bits = 1 >> release-package\config.toml
+          echo. >> release-package\config.toml
+          echo [message] >> release-package\config.toml
+          echo shutdown_text = "SHUTDOWN\r" >> release-package\config.toml
+
+      - name: Create ZIP archive
+        run: |
+          Compress-Archive -Path release-package\* -DestinationPath serial-shutdown-notifier-${{ needs.create-release.outputs.release_version }}-windows-x64.zip
+        shell: pwsh
+
+      - name: Upload Release Asset (ZIP)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./serial-shutdown-notifier-${{ needs.create-release.outputs.release_version }}-windows-x64.zip
+          asset_name: serial-shutdown-notifier-${{ needs.create-release.outputs.release_version }}-windows-x64.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset (EXE)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./target/release/serial-shutdown-notifier.exe
+          asset_name: serial-shutdown-notifier.exe
+          asset_content_type: application/octet-stream

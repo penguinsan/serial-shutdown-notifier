@@ -72,7 +72,7 @@ impl SerialSender {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{Config, SerialConfig, MessageConfig};
+    use crate::config::{Config, MessageConfig, SerialConfig};
 
     #[test]
     fn test_serial_sender_creation() {
@@ -140,7 +140,10 @@ mod tests {
                 },
             };
             let sender = SerialSender::new(config);
-            assert_eq!(sender.config.serial.parity.to_lowercase(), parity.to_lowercase());
+            assert_eq!(
+                sender.config.serial.parity.to_lowercase(),
+                parity.to_lowercase()
+            );
         }
     }
 
@@ -188,13 +191,7 @@ mod tests {
 
     #[test]
     fn test_message_content() {
-        let test_messages = vec![
-            "SHUTDOWN\r",
-            "SHUTDOWN\n",
-            "SHUTDOWN\r\n",
-            "HALT",
-            "",
-        ];
+        let test_messages = vec!["SHUTDOWN\r", "SHUTDOWN\n", "SHUTDOWN\r\n", "HALT", ""];
 
         for msg in test_messages {
             let config = Config {

@@ -80,15 +80,14 @@ fn install_service() -> Result<(), Box<dyn std::error::Error>> {
 
     // プリシャットダウン設定を追加（シャットダウン前に確実に実行されるようにする）
     let output = Command::new("sc")
-        .args([
-            "config",
-            service::SERVICE_NAME,
-            "start= auto",
-        ])
+        .args(["config", service::SERVICE_NAME, "start= auto"])
         .output()?;
 
     if !output.status.success() {
-        log::warn!("Failed to configure preshutdown: {}", String::from_utf8_lossy(&output.stderr));
+        log::warn!(
+            "Failed to configure preshutdown: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     Ok(())
@@ -122,7 +121,9 @@ fn test_serial_connection() -> Result<(), Box<dyn std::error::Error>> {
     println!("Testing serial connection...");
 
     let exe_path = std::env::current_exe()?;
-    let exe_dir = exe_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    let exe_dir = exe_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
     let config_path = exe_dir.join("config.toml");
 
     let config = config::Config::load_or_default(&config_path);
@@ -148,11 +149,22 @@ fn print_usage() {
     println!("Serial Shutdown Notifier");
     println!();
     println!("Usage:");
-    println!("  {} install   - Install the service", std::env::args().next().unwrap());
-    println!("  {} uninstall - Uninstall the service", std::env::args().next().unwrap());
-    println!("  {} test      - Test serial connection", std::env::args().next().unwrap());
+    println!(
+        "  {} install   - Install the service",
+        std::env::args().next().unwrap()
+    );
+    println!(
+        "  {} uninstall - Uninstall the service",
+        std::env::args().next().unwrap()
+    );
+    println!(
+        "  {} test      - Test serial connection",
+        std::env::args().next().unwrap()
+    );
     println!();
-    println!("Service will automatically send a message to the configured serial port on shutdown.");
+    println!(
+        "Service will automatically send a message to the configured serial port on shutdown."
+    );
 }
 
 #[cfg(test)]

@@ -18,7 +18,9 @@ pub fn run_service() -> Result<(), windows_service::Error> {
 
                 // サービスディレクトリから設定ファイルを読み込む
                 let exe_path = std::env::current_exe().unwrap_or_default();
-                let exe_dir = exe_path.parent().unwrap_or_else(|| std::path::Path::new("."));
+                let exe_dir = exe_path
+                    .parent()
+                    .unwrap_or_else(|| std::path::Path::new("."));
                 let config_path = exe_dir.join("config.toml");
 
                 let config = Config::load_or_default(&config_path);

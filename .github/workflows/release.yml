@@ -46,19 +46,24 @@ jobs:
 
       - name: Create release package
         run: |
-          mkdir release-package
-          copy target\release\serial-shutdown-notifier.exe release-package\
-          copy LICENSE release-package\
-          copy README.md release-package\
-          echo [serial] > release-package\config.toml
-          echo port = "COM1" >> release-package\config.toml
-          echo baud_rate = 9600 >> release-package\config.toml
-          echo data_bits = 8 >> release-package\config.toml
-          echo parity = "None" >> release-package\config.toml
-          echo stop_bits = 1 >> release-package\config.toml
-          echo. >> release-package\config.toml
-          echo [message] >> release-package\config.toml
-          echo shutdown_text = "SHUTDOWN\r" >> release-package\config.toml
+          New-Item -ItemType Directory -Path release-package
+          Copy-Item target\release\serial-shutdown-notifier.exe release-package\
+          Copy-Item LICENSE release-package\
+          Copy-Item README.md release-package\
+
+          $config = @"
+          [serial]
+          port = "COM1"
+          baud_rate = 9600
+          data_bits = 8
+          parity = "None"
+          stop_bits = 1
+
+          [message]
+          shutdown_text = "SHUTDOWN\r"
+          "@
+          $config | Out-File -FilePath release-package\config.toml -Encoding utf8
+        shell: pwsh
 
       - name: Create ZIP archive
         run: |

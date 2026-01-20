@@ -59,7 +59,9 @@ fn install_service() -> Result<(), Box<dyn std::error::Error>> {
 
     // 管理者権限チェック
     if !is_elevated() {
-        return Err("This command requires administrator privileges. Please run as administrator.".into());
+        return Err(
+            "This command requires administrator privileges. Please run as administrator.".into(),
+        );
     }
 
     let exe_path = std::env::current_exe()?;
@@ -116,7 +118,9 @@ fn install_service() -> Result<(), Box<dyn std::error::Error>> {
 
 fn is_elevated() -> bool {
     use windows::Win32::Foundation::HANDLE;
-    use windows::Win32::Security::{GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY};
+    use windows::Win32::Security::{
+        GetTokenInformation, TokenElevation, TOKEN_ELEVATION, TOKEN_QUERY,
+    };
     use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 
     unsafe {
@@ -149,7 +153,9 @@ fn uninstall_service() -> Result<(), Box<dyn std::error::Error>> {
 
     // 管理者権限チェック
     if !is_elevated() {
-        return Err("This command requires administrator privileges. Please run as administrator.".into());
+        return Err(
+            "This command requires administrator privileges. Please run as administrator.".into(),
+        );
     }
 
     println!("Uninstalling service...");
